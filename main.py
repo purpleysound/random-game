@@ -3,7 +3,7 @@ pygame.init()
 screen = pygame.display.set_mode((640, 480))
 pygame.display.set_caption("game")
 clock = pygame.time.Clock()
-
+import math
 
 class Entity:
     def __init__(self, coordinates: tuple[int]) -> None:
@@ -70,6 +70,10 @@ class Player(Entity):
         else:
             self.x_vel = 0
 
+        self.weapon.rotation = math.atan2(mouse_pos[1] - self.y_pos, mouse_pos[0] - self.x_pos)
+        if mouse_pressed[0]:
+            self.weapon.shoot()
+
         super().update()
 
 
@@ -89,36 +93,49 @@ class Weapon:
         return self._obj_attributes["entity"]
 
     def update(self) -> None:
-        self.x_pos, self.y_pos = self.entity.x_pos, self.entity.y_pos
+        self.x_pos, self.y_pos = self.entity.x_pos+10, self.entity.y_pos
         self.rect.center = (self.x_pos, self.y_pos)
         for projectile in self.projectiles:
             projectile.update()
 
     def shoot(self) -> None:
-        self.projectiles.append(self.projectile)
+        self.projectiles.append(self.projectile(self, self.rotation))
+
 
 class Gun(Weapon):
     def __init__(self, entity: Entity) -> None:
         super().__init__(entity)
         self.image = pygame.image.load("textures/gun.png")
         self.rect = self.image.get_rect(center=(self.x_pos, self.y_pos))
-
+        self.projectile = Bullet
 
 
 class Projectile:
-    def __init__(self, weapon: Weapon) -> None:
+    def __init__(self, weapon: Weapon, angle: float) -> None:
         self.x_pos, self.y_pos = weapon.x_pos, weapon.y_pos
         self.x_vel, self.y_vel = 0, 0
         self.speed = 128
+        self.x_vel, self.y_vel = math.cos(angle) * self.speed, math.sin(angle) * self.speed
 
         self._obj_attributes = {
             "weapon": weapon
         }
 
+    def update(self):
+        self.x_pos += self.x_vel * delta_time
+        self.y_pos += self.y_vel * delta_time
+        self.rect.center = (self.x_pos, self.y_pos)
+
     @property
     def weapon(self) -> Weapon:
         return self._obj_attributes["weapon"]
 
+
+class Bullet(Projectile):
+    def __init__(self, weapon: Weapon, angle: float) -> None:
+        super().__init__(weapon, angle)
+        self.image = pygame.image.load("textures/bullet.png")
+        self.rect = self.image.get_rect(center=(self.x_pos, self.y_pos))
 
 def update_screen():
     screen.fill((255, 255, 255))
@@ -138,6 +155,8 @@ while running:
             running = False
 
     keys = pygame.key.get_pressed()
+    mouse_pos = pygame.mouse.get_pos()
+    mouse_pressed = pygame.mouse.get_pressed()
     player.update()
     update_screen()
     delta_time = clock.tick(60)/1000
