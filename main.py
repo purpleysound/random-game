@@ -83,6 +83,9 @@ class Weapon:
         self.rotation = 0
         self.projectile = Projectile
         self.projectiles = []
+        self.max_cooldown = 0.5
+        self.cooldown = 0
+
 
         self._obj_attributes = {
             "entity": entity
@@ -94,12 +97,18 @@ class Weapon:
 
     def update(self) -> None:
         self.x_pos, self.y_pos = self.entity.x_pos+10, self.entity.y_pos
+        if self.cooldown > 0:
+            self.cooldown -= delta_time
+            if self.cooldown < 0:
+                self.cooldown = 0
         self.rect.center = (self.x_pos, self.y_pos)
         for projectile in self.projectiles:
             projectile.update()
 
     def shoot(self) -> None:
-        self.projectiles.append(self.projectile(self, self.rotation))
+        if self.cooldown == 0:
+            self.cooldown = self.max_cooldown
+            self.projectiles.append(self.projectile(self, self.rotation))
 
 
 class Gun(Weapon):
