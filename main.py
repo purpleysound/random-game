@@ -90,6 +90,7 @@ class Weapon:
 
     def update(self) -> None:
         self.x_pos, self.y_pos = self.entity.x_pos, self.entity.y_pos
+        self.rect.center = (self.x_pos, self.y_pos)
         for projectile in self.projectiles:
             projectile.update()
 
