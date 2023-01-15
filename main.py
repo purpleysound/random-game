@@ -1,9 +1,11 @@
 import pygame
 pygame.init()
-screen = pygame.display.set_mode((640, 480))
+MAX_X, MAX_Y = 640, 480
+screen = pygame.display.set_mode((MAX_X, MAX_Y))
 pygame.display.set_caption("game")
 clock = pygame.time.Clock()
 import math
+import random
 
 class Entity:
     def __init__(self, coordinates: tuple[int]) -> None:
@@ -15,6 +17,13 @@ class Entity:
         self._obj_attributes = {
             "weapon": None
         }
+    
+    @property
+    def weapon(self):
+        return self._obj_attributes["weapon"]
+
+    def set_weapon(self, weapon) -> None:
+        self._obj_attributes["weapon"] = weapon
 
     def update(self) -> None:
         if self.x_vel > self.max_vel:
@@ -38,12 +47,10 @@ class Entity:
 
         self.weapon.update()
 
-    @property
-    def weapon(self):
-        return self._obj_attributes["weapon"]
-
-    def set_weapon(self, weapon) -> None:
-        self._obj_attributes["weapon"] = weapon
+    def death(self) -> None:
+        if self in enemies:
+            enemies.remove(self)
+        enemies.append(Enemy((random.randint(32, 608), random.randint(32, 448))))
 
 
 class Player(Entity):
@@ -73,6 +80,24 @@ class Player(Entity):
         self.weapon.rotation = math.atan2(mouse_pos[1] - self.y_pos, mouse_pos[0] - self.x_pos)
         if mouse_pressed[0]:
             self.weapon.shoot()
+
+        super().update()
+
+class Enemy(Entity):
+    def __init__(self, coordinates: tuple[int]) -> None:
+        super().__init__(coordinates)
+        self.image = pygame.image.load("textures/enemy.png")
+        self.rect = self.image.get_rect(center=(self.x_pos, self.y_pos))
+        self.set_weapon(Gun(self))
+
+    def update(self) -> None:
+        self.x_vel, self.y_vel = unit_vector((player.x_pos - self.x_pos, player.y_pos - self.y_pos))
+        self.x_vel *= self.speed
+        self.y_vel *= self.speed
+        for projectile in player.weapon.projectiles:
+            if projectile.rect.colliderect(self.rect):
+                player.weapon.projectiles.remove(projectile)
+                self.death()
 
         super().update()
 
@@ -121,7 +146,7 @@ class Gun(Weapon):
 
 class Projectile:
     def __init__(self, weapon: Weapon, angle: float) -> None:
-        self.x_pos, self.y_pos = weapon.x_pos, weapon.y_pos
+        self.x_pos, self.y_pos = weapon.x_pos+5, weapon.y_pos
         self.x_vel, self.y_vel = 0, 0
         self.speed = 128
         self.x_vel, self.y_vel = math.cos(angle) * self.speed, math.sin(angle) * self.speed
@@ -130,14 +155,14 @@ class Projectile:
             "weapon": weapon
         }
 
+    @property
+    def weapon(self) -> Weapon:
+        return self._obj_attributes["weapon"]
+
     def update(self):
         self.x_pos += self.x_vel * delta_time
         self.y_pos += self.y_vel * delta_time
         self.rect.center = (self.x_pos, self.y_pos)
-
-    @property
-    def weapon(self) -> Weapon:
-        return self._obj_attributes["weapon"]
 
 
 class Bullet(Projectile):
@@ -152,10 +177,23 @@ def update_screen():
     screen.blit(player.weapon.image, player.weapon.rect)
     for projectile in player.weapon.projectiles:
         screen.blit(projectile.image, projectile.rect)
+    for enemy in enemies: 
+        screen.blit(enemy.image, enemy.rect)
+        screen.blit(enemy.weapon.image, enemy.weapon.rect)
+        for projectile in enemy.weapon.projectiles:
+            screen.blit(projectile.image, projectile.rect)
     pygame.display.update()
 
 
-player = Player((64, 64))
+def unit_vector(vector: tuple[float]) -> tuple[float]:
+    magnitude = math.sqrt(vector[0] ** 2 + vector[1] ** 2)
+    if magnitude == 0:
+        return 0, 0
+    return (vector[0] / magnitude, vector[1] / magnitude)
+
+
+player = Player((MAX_X//2, MAX_Y//2))
+enemies = [Enemy((128, 128))]
 delta_time = 0
 running = True
 while running:
@@ -167,6 +205,7 @@ while running:
     mouse_pos = pygame.mouse.get_pos()
     mouse_pressed = pygame.mouse.get_pressed()
     player.update()
+    for enemy in enemies: enemy.update()
     update_screen()
     delta_time = clock.tick(60)/1000
 
