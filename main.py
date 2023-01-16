@@ -50,7 +50,10 @@ class Entity:
     def death(self) -> None:
         if self in enemies:
             enemies.remove(self)
-        enemies.append(Enemy((random.randint(32, 608), random.randint(32, 448))))
+            enemies.append(Enemy(get_enemy_spawn_pos()))
+        else:
+            print("You died!")
+            exit()
 
 
 class Player(Entity):
@@ -80,6 +83,11 @@ class Player(Entity):
         self.weapon.rotation = math.atan2(mouse_pos[1] - self.y_pos, mouse_pos[0] - self.x_pos)
         if mouse_pressed[0]:
             self.weapon.shoot()
+        for enemy in enemies:
+            for projectile in enemy.weapon.projectiles:
+                if projectile.rect.colliderect(self.rect):
+                    enemy.weapon.projectiles.remove(projectile)
+                    self.death()
 
         super().update()
 
@@ -192,6 +200,23 @@ def unit_vector(vector: tuple[float]) -> tuple[float]:
     if magnitude == 0:
         return 0, 0
     return (vector[0] / magnitude, vector[1] / magnitude)
+
+def distance(point1: tuple[float], point2: tuple[float]) -> float:
+    return math.sqrt((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2)
+
+def get_enemy_spawn_pos() -> tuple[int]:
+    px, py = map(int, [player.x_pos, player.y_pos])
+    if px < 128:
+        px = 128
+    elif px > 352:
+        px = 352
+    if py < 128:
+        py = 128
+    elif py > 352:
+        py = 352
+    x_pos = random.choices([random.randint(0, px-128), random.randint(px+128, 640)], [len(range(0, px-128)), len(range(px+128, 640))], k=1)[0]
+    y_pos = random.choices([random.randint(0, py-128), random.randint(py+128, 480)], [len(range(0, py-128)), len(range(py+128, 480))], k=1)[0]
+    return x_pos, y_pos
 
 
 player = Player((MAX_X//2, MAX_Y//2))
