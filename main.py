@@ -98,6 +98,8 @@ class Enemy(Entity):
             if projectile.rect.colliderect(self.rect):
                 player.weapon.projectiles.remove(projectile)
                 self.death()
+        self.weapon.rotation = math.atan2(player.x_pos - self.x_pos, player.y_pos - self.y_pos)
+        self.weapon.shoot()
 
         super().update()
 
@@ -208,6 +210,7 @@ while running:
     for enemy in enemies: enemy.update()
     update_screen()
     delta_time = clock.tick(60)/1000
+    pygame.display.set_caption(f"game FPS:{round(clock.get_fps())}")
 
 pygame.quit()
 exit()
