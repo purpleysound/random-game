@@ -7,6 +7,18 @@ clock = pygame.time.Clock()
 import math
 import random
 
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+YELLOW = (255, 255, 0)
+PURPLE = (255, 0, 255)
+CYAN = (0, 255, 255)
+LIGHT_GREY = (200, 200, 200)
+DARK_GREY = (100, 100, 100)
+GREY = (150, 150, 150)
+
 class Entity:
     def __init__(self, coordinates: tuple[int]) -> None:
         self.x_pos, self.y_pos = coordinates
@@ -178,11 +190,11 @@ class Projectile:
 class Bullet(Projectile):
     def __init__(self, weapon: Weapon, angle: float) -> None:
         super().__init__(weapon, angle)
-        self.image = pygame.image.load("textures/bullet.png")
+        self.image = pygame.image.load("textures/bullet.png") if weapon.entity == player else colourise(pygame.image.load("textures/bullet.png"), RED)
         self.rect = self.image.get_rect(center=(self.x_pos, self.y_pos))
 
 def update_screen():
-    screen.fill((255, 255, 255))
+    screen.fill(GREY)
     screen.blit(player.image, player.rect)
     screen.blit(player.weapon.image, player.weapon.rect)
     for projectile in player.weapon.projectiles:
@@ -206,17 +218,22 @@ def distance(point1: tuple[float], point2: tuple[float]) -> float:
 
 def get_enemy_spawn_pos() -> tuple[int]:
     px, py = map(int, [player.x_pos, player.y_pos])
-    if px < 128:
-        px = 128
-    elif px > 352:
-        px = 352
-    if py < 128:
-        py = 128
-    elif py > 352:
-        py = 352
-    x_pos = random.choices([random.randint(0, px-128), random.randint(px+128, 640)], [len(range(0, px-128)), len(range(px+128, 640))], k=1)[0]
-    y_pos = random.choices([random.randint(0, py-128), random.randint(py+128, 480)], [len(range(0, py-128)), len(range(py+128, 480))], k=1)[0]
+    if px < 144:
+        px = 144
+    elif px > 496:
+        px = 496
+    if py < 144:
+        py = 144
+    elif py > 336:
+        py = 336
+    x_pos = random.choices([random.randint(16, px-128), random.randint(px+128, 640)], [len(range(16, px-128)), len(range(px+128, 640))], k=1)[0]
+    y_pos = random.choices([random.randint(16, py-128), random.randint(py+128, 480)], [len(range(16, py-128)), len(range(py+128, 480))], k=1)[0]
     return x_pos, y_pos
+
+def colourise(image, colour):
+    image.fill((0,0,0,255), None, pygame.BLEND_RGBA_MULT)
+    image.fill(colour + (0,), None, pygame.BLEND_RGBA_ADD)
+    return image
 
 
 player = Player((MAX_X//2, MAX_Y//2))
