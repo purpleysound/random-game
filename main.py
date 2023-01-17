@@ -112,6 +112,7 @@ class Enemy(Entity):
         self.image = pygame.image.load("textures/enemy.png")
         self.rect = self.image.get_rect(center=(self.x_pos, self.y_pos))
         self.set_weapon(Gun(self))
+        self.weapon.max_cooldown *= 1.5
 
     def update(self) -> None:
         self.x_vel, self.y_vel = unit_vector((player.x_pos - self.x_pos, player.y_pos - self.y_pos))
