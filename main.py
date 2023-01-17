@@ -121,7 +121,7 @@ class Enemy(Entity):
             if projectile.rect.colliderect(self.rect):
                 player.weapon.projectiles.remove(projectile)
                 self.death()
-        self.weapon.rotation = math.atan2(player.x_pos - self.x_pos, player.y_pos - self.y_pos)
+        self.weapon.rotation = math.atan2(player.y_pos - self.y_pos, player.x_pos - self.x_pos)
         self.weapon.shoot()
 
         super().update()
