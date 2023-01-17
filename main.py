@@ -61,10 +61,12 @@ class Entity:
 
     def death(self) -> None:
         if self in enemies:
+            player.score += 1
             enemies.remove(self)
             enemies.append(Enemy(get_enemy_spawn_pos()))
         else:
             print("You died!")
+            print(f"Score: {player.score}")
             exit()
 
 
@@ -76,6 +78,7 @@ class Player(Entity):
         self.min_vel, self.max_vel = -96, 96
         self.speed = 96
         self.set_weapon(Gun(self))
+        self.score = 0
 
     def update(self) -> None:
         if keys[pygame.K_w] and not keys[pygame.K_s]:
@@ -239,6 +242,7 @@ def colourise(image, colour):
 player = Player((MAX_X//2, MAX_Y//2))
 enemies = [Enemy((128, 128))]
 delta_time = 0
+timer = 0
 running = True
 while running:
     for event in pygame.event.get():
@@ -252,7 +256,12 @@ while running:
     for enemy in enemies: enemy.update()
     update_screen()
     delta_time = clock.tick(60)/1000
-    pygame.display.set_caption(f"game FPS:{round(clock.get_fps())}")
+    timer += delta_time
+    if timer > 10:
+        enemies.append(Enemy(get_enemy_spawn_pos()))
+        timer = 0
+
+    pygame.display.set_caption(f"game FPS:{round(clock.get_fps())}    score: {player.score}")
 
 pygame.quit()
 exit()
